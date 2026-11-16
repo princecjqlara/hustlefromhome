@@ -685,6 +685,7 @@ export function Meetings({ data, action, busy }: Props) {
     capacity: 100,
     notes: "",
     reminder_minutes: [1440, 60],
+    reminder_offsets: "1440, 60",
     reminder_text: "Reminder: {{title}} starts at {{date}}. {{notes}}",
   };
   const [form, setForm] = useState<any>(blank),
@@ -822,6 +823,7 @@ export function Meetings({ data, action, busy }: Props) {
                     onClick={() => {
                       setForm({
                         ...m,
+                        reminder_offsets: m.reminder_minutes.join(", "),
                         starts_at: new Date(
                           new Date(m.starts_at).getTime() -
                             new Date(m.starts_at).getTimezoneOffset() * 60000,
@@ -901,7 +903,15 @@ export function Meetings({ data, action, busy }: Props) {
               e.preventDefault();
               const result = await action(
                 "meeting.save",
-                { ...form, starts_at: new Date(form.starts_at).toISOString() },
+                {
+                  ...form,
+                  starts_at: new Date(form.starts_at).toISOString(),
+                  reminder_minutes: form.reminder_offsets.trim()
+                    ? form.reminder_offsets
+                        .split(",")
+                        .map((v: string) => Number(v.trim()))
+                    : [],
+                },
                 "Meeting saved",
               );
               if (result) setOpen(false);
@@ -984,11 +994,11 @@ export function Meetings({ data, action, busy }: Props) {
                 hint="Comma separated; 1440 = one day, 60 = one hour."
               >
                 <input
-                  value={form.reminder_minutes.join(", ")}
+                  value={form.reminder_offsets}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      reminder_minutes: e.target.value.split(",").map(Number),
+                      reminder_offsets: e.target.value,
                     })
                   }
                 />

@@ -21,3 +21,14 @@ export async function audit(
 ) {
   checked(await db().from("audit_log").insert({ action, details, actor }));
 }
+/** Keep bulk actions complete beyond PostgREST's default 1,000-row limit. */
+export async function allRows(query: any): Promise<any[]> {
+  const rows: any[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const batch = checked(
+      await query.order("id").range(offset, offset + 999),
+    ) as any[];
+    rows.push(...batch);
+    if (batch.length < 1000) return rows;
+  }
+}

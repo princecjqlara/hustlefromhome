@@ -12,6 +12,7 @@ import { decrypt } from "./crypto";
 import { decide, choice } from "./jev";
 import { explicitOptOut, nextFollowup } from "./policy";
 import type { Contact, Settings } from "./types";
+import { eventTime, incomingIsOlder } from "./workflow";
 export async function settings(): Promise<Settings> {
   return checked(
     await db().from("settings").select("*").eq("id", "business").single(),
@@ -68,7 +69,8 @@ export async function processEvent(
     await s
       .from("messages")
       .update({ status: "sent" })
-      .eq("external_id", msg.mid);
+      .eq("external_id", msg.mid)
+      .in("status", ["received"]);
     return;
   }
   const psid = event.sender?.id;
@@ -87,13 +89,17 @@ export async function processEvent(
         .from("messages")
         .update({ status: event.read ? "read" : "delivered" })
         .eq("contact_id", c.id)
-        .eq("direction", "out");
+        .eq("direction", "out")
+        .in(
+          "status",
+          event.read ? ["received", "sent", "delivered"] : ["received", "sent"],
+        );
       if (event.delivery?.mids)
         query = query.in("external_id", event.delivery.mids);
       else
         query = query.lte(
           "sent_at",
-          new Date(event.read.watermark).toISOString(),
+          eventTime(event.read?.watermark || event.delivery?.watermark),
         );
       checked(await query);
     }
@@ -111,12 +117,15 @@ export async function processEvent(
         [profile.first_name, profile.last_name].filter(Boolean).join(" ") ||
         name;
     } catch {}
-    const created = await s
-      .from("contacts")
-      .upsert(
-        { page_id: pageId, psid, name },
-        { onConflict: "page_id,psid", ignoreDuplicates: true },
-      );
+    const created = await s.from("contacts").upsert(
+      {
+        page_id: pageId,
+        psid,
+        name,
+        first_inquiry_at: eventTime(event.timestamp),
+      },
+      { onConflict: "page_id,psid", ignoreDuplicates: true },
+    );
     checked(created);
     c = checked(
       await s
@@ -157,9 +166,8 @@ export async function processEvent(
         .maybeSingle(),
     );
     if (existing) return;
-    const time = new Date(
-      Math.min(Number(event.timestamp) || Date.now(), Date.now()),
-    ).toISOString();
+    const time = eventTime(event.timestamp);
+    const stale = incomingIsOlder(time, c!.last_inbound_at);
     checked(
       await s.from("messages").upsert(
         {
@@ -174,24 +182,22 @@ export async function processEvent(
       ),
     );
     // Out-of-order events must never move the eligibility window backwards.
-    const inbound =
-      !c!.last_inbound_at || time > c!.last_inbound_at
-        ? time
-        : c!.last_inbound_at;
+    const inbound = !c!.last_inbound_at || !stale ? time : c!.last_inbound_at;
     checked(
       await s
         .from("contacts")
         .update({ last_inbound_at: inbound })
         .eq("id", contact.id),
     );
-    checked(
-      await s
-        .from("jobs")
-        .update({ status: "canceled", last_error: "Contact replied" })
-        .eq("contact_id", contact.id)
-        .eq("kind", "followup")
-        .eq("status", "pending"),
-    );
+    if (!stale)
+      checked(
+        await s
+          .from("jobs")
+          .update({ status: "canceled", last_error: "Contact replied" })
+          .eq("contact_id", contact.id)
+          .eq("kind", "followup")
+          .eq("status", "pending"),
+      );
     if (explicitOptOut(text)) {
       checked(
         await s
@@ -227,6 +233,8 @@ export async function processEvent(
     const cfg = await settings();
     if (
       !cfg.automation_enabled ||
+      !page.connected ||
+      stale ||
       c!.opted_out ||
       c!.human_takeover ||
       !cfg.questions.length ||

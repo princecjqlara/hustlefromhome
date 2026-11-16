@@ -12,6 +12,7 @@ import {
 import { choice, decide } from "./jev";
 import { quietAt } from "./policy";
 import type { Job } from "./types";
+import { meetingVersion } from "./workflow";
 async function execute(job: Job) {
   const s = db();
   if (job.kind === "webhook") {
@@ -123,7 +124,8 @@ async function execute(job: Job) {
       new Date(m.starts_at).getTime() < Date.now() ||
       c.status !== "qualified" ||
       invite.rsvp === "no" ||
-      job.payload.starts_at !== m.starts_at
+      job.payload.starts_at !== m.starts_at ||
+      (job.payload.revision && job.payload.revision !== meetingVersion(m))
     )
       throw new Blocked("Meeting invitation or reminder no longer applies");
     const date =
@@ -156,6 +158,9 @@ async function execute(job: Job) {
           .select("id")
           .single(),
       );
+    checked(
+      await s.from("tracked_links").update({ url: m.url }).eq("id", link.id),
+    );
     await send(
       c.id,
       {
@@ -191,14 +196,19 @@ async function execute(job: Job) {
       },
       job.id,
     );
+    if (m.notes) await send(c.id, { text: m.notes }, `${job.id}:notes`);
     for (const minutes of m.reminder_minutes) {
       const due = new Date(new Date(m.starts_at).getTime() - minutes * 60000);
       if (due.getTime() > Date.now())
         await enqueue(
           "reminder",
-          `reminder:${invite.id}:${m.starts_at}:${minutes}`,
+          `reminder:${invite.id}:${meetingVersion(m)}:${minutes}`,
           c.id,
-          { meeting_id: m.id, starts_at: m.starts_at },
+          {
+            meeting_id: m.id,
+            starts_at: m.starts_at,
+            revision: meetingVersion(m),
+          },
           due.toISOString(),
         );
     }

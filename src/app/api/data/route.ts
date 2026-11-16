@@ -15,6 +15,7 @@ export async function GET() {
       "settings",
       "meetings",
       "invitations",
+      "tracked_links",
       "jobs",
       "campaigns",
       "ad_daily",
@@ -25,7 +26,7 @@ export async function GET() {
         const order =
           table === "messages"
             ? "sent_at"
-            : ["settings", "invitations"].includes(table)
+            : ["settings", "invitations", "tracked_links"].includes(table)
               ? "id"
               : table === "ad_daily"
                 ? "date"

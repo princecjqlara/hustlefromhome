@@ -1156,6 +1156,24 @@ function ContactDetail({
           {times.observations} inbound messages across {times.days} days ·{" "}
           {c.timezone}
         </small>
+        <h4 className="detail-section-title">Button activity</h4>
+        {(data.tracked_links || [])
+          .filter((link: any) => link.contact_id === c.id)
+          .map((link: any) => (
+            <div className="review-row" key={link.id}>
+              <span>
+                <a href={link.url} target="_blank" rel="noreferrer">
+                  {link.url}
+                </a>
+                <small>
+                  {link.last_clicked_at
+                    ? fmt(link.last_clicked_at)
+                    : "No click recorded"}
+                </small>
+              </span>
+              <span className="badge">{link.clicks} clicks</span>
+            </div>
+          ))}
         <h4 className="detail-section-title">Contact details</h4>
         <form
           onSubmit={(e) => {

@@ -85,10 +85,6 @@ export async function send(
   );
   if (prior?.status === "sent") return prior.message_id;
   if (prior) throw new Uncertain("Prior send outcome requires review");
-  const reservation = await s
-    .from("outbound_attempts")
-    .insert({ action_key: key, contact_id: contactId });
-  if (reservation.error) throw new Uncertain("Send already reserved");
   // Wrap external button URLs with per-contact tracked redirects.
   message = JSON.parse(JSON.stringify(message));
   const buttonGroups = [
@@ -133,6 +129,10 @@ export async function send(
     )
       throw new Blocked("Conversation changed before follow-up dispatch");
   }
+  const reservation = await s
+    .from("outbound_attempts")
+    .insert({ action_key: key, contact_id: contactId });
+  if (reservation.error) throw new Uncertain("Send already reserved");
   try {
     result = await graph(`${page.id}/messages`, decrypt(page.token_encrypted), {
       recipient: { id: contact.psid },

@@ -11,7 +11,7 @@ const client = new pg.Client({
     ca: readFileSync("artifacts/supabase-ca.crt", "utf8"),
   },
 });
-async function webhook(text, mid) {
+async function webhook(text, mid, extra = {}) {
   const body = JSON.stringify({
     object: "page",
     entry: [
@@ -23,6 +23,7 @@ async function webhook(text, mid) {
             recipient: { id },
             timestamp: Date.now(),
             message: { mid, text },
+            ...extra,
           },
         ],
       },
@@ -102,7 +103,55 @@ try {
     ),
     1,
   );
+  const watermark = Date.now();
+  await client.query(
+    "insert into messages(contact_id,external_id,direction,text,status,sent_at) values($1,$2,'out','Synthetic receipt verification','sent',now()-interval '1 second')",
+    [c.id, id + "-out"],
+  );
+  await webhook("", id + "-read", { message: undefined, read: { watermark } });
+  await tick();
+  assert.equal(
+    (
+      await client.query("select status from messages where external_id=$1", [
+        id + "-out",
+      ])
+    ).rows[0].status,
+    "read",
+  );
+  await webhook("", id + "-delivery", {
+    message: undefined,
+    delivery: { watermark },
+  });
+  await tick();
+  assert.equal(
+    (
+      await client.query("select status from messages where external_id=$1", [
+        id + "-out",
+      ])
+    ).rows[0].status,
+    "read",
+  );
+  await webhook("An older inquiry", id + "-stale", {
+    timestamp: Date.parse(c.last_inbound_at) - 3600000,
+  });
+  await tick();
+  assert.equal(
+    new Date(
+      (
+        await client.query("select last_inbound_at from contacts where id=$1", [
+          c.id,
+        ])
+      ).rows[0].last_inbound_at,
+    ).getTime(),
+    new Date(c.last_inbound_at).getTime(),
+  );
   await webhook("STOP", id + "-stop");
+  assert.equal(
+    (await client.query("select opted_out from contacts where id=$1", [c.id]))
+      .rows[0].opted_out,
+    true,
+    "Opt-out applies at receipt before the worker runs",
+  );
   await tick();
   c = (await client.query("select * from contacts where page_id=$1", [id]))
     .rows[0];
@@ -120,7 +169,7 @@ try {
     0,
   );
   console.log(
-    "Synthetic webhook workflow passed: persistence, duplicate protection, cron processing, immediate opt-out, and no outbound sends.",
+    "Synthetic webhook workflow passed: persistence, deduplication, cron processing, read/delivery ordering, stale-message timestamps, immediate opt-out, and no outbound sends.",
   );
 } catch (e) {
   console.error(e.message);

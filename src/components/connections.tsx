@@ -221,7 +221,7 @@ export function Campaigns({ data, action, busy }: Props) {
               <Field label="Through">
                 <input
                   type="date"
-                  value={form.filter.to}
+                  value={form.filter.to.slice(0, 10)}
                   onChange={(e) =>
                     change({
                       filter: {

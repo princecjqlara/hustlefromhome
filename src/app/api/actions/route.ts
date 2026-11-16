@@ -2,7 +2,7 @@ import { z } from "zod";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { member, sameOrigin, apiError } from "@/lib/auth";
-import { db, checked, audit } from "@/lib/db";
+import { db, checked, audit, allRows } from "@/lib/db";
 import { decrypt, encrypt } from "@/lib/crypto";
 import {
   send,
@@ -14,11 +14,12 @@ import {
 import { eligibility, type SendMode } from "@/lib/policy";
 import { runJobs } from "@/lib/jobs";
 import { scheduleFollowup } from "@/lib/automation";
+import { meetingVersion, needsFollowupResume } from "@/lib/workflow";
 const uuid = z.string().uuid();
 const url = z
   .string()
   .url()
-  .refine((u) => new URL(u).protocol === "https:", "Use an HTTPS URL");
+  .refine((u) => u.startsWith("https://"), "Use an HTTPS URL");
 const buttonsSchema = z
   .array(z.object({ title: z.string().min(1).max(20), url }))
   .max(3)
@@ -160,6 +161,13 @@ export async function POST(req: Request) {
           .parse(body.data);
         if (p.timezone) new Intl.DateTimeFormat("en", { timeZone: p.timezone });
         const { id, ...patch } = p;
+        const before = checked(
+          await s
+            .from("contacts")
+            .select("human_takeover,opted_out")
+            .eq("id", id)
+            .single(),
+        );
         if (p.status)
           patch.tags = Array.from(
             new Set([
@@ -192,6 +200,8 @@ export async function POST(req: Request) {
               .eq("kind", "followup")
               .eq("status", "pending"),
           );
+        if (needsFollowupResume(before, p))
+          await scheduleFollowup(id, `resumed:${randomUUID()}`);
         break;
       }
       case "settings.save": {
@@ -263,14 +273,13 @@ export async function POST(req: Request) {
             .eq("id", "business"),
         );
         if (p.automation_enabled && !old.automation_enabled) {
-          const contacts = checked(
-            await s
+          const contacts = await allRows(
+            s
               .from("contacts")
               .select("id")
               .in("status", ["new", "incomplete"])
               .eq("opted_out", false)
-              .eq("human_takeover", false)
-              .limit(1000),
+              .eq("human_takeover", false),
           );
           for (const c of contacts)
             await scheduleFollowup(c.id, `enabled:${randomUUID()}`);
@@ -322,7 +331,12 @@ export async function POST(req: Request) {
         if (new Date(p.starts_at).getTime() < Date.now())
           throw new Error("Choose a future meeting time");
         if (p.id) {
-          checked(await s.from("meetings").update(p).eq("id", p.id));
+          checked(
+            await s
+              .from("meetings")
+              .update({ ...p, revision: randomUUID() })
+              .eq("id", p.id),
+          );
           checked(
             await s
               .from("jobs")
@@ -365,8 +379,8 @@ export async function POST(req: Request) {
           await s.from("meetings").select("*").eq("id", id).single(),
         );
         if (m.canceled) throw new Error("Meeting canceled");
-        const contacts = checked(
-          await applyFilter(
+        const contacts = await allRows(
+          applyFilter(
             s
               .from("contacts")
               .select("*")
@@ -386,9 +400,13 @@ export async function POST(req: Request) {
           );
           await enqueue(
             "invitation",
-            `invite:${id}:${c.id}:${m.starts_at}`,
+            `invite:${id}:${c.id}:${meetingVersion(m)}`,
             c.id,
-            { meeting_id: id, starts_at: m.starts_at },
+            {
+              meeting_id: id,
+              starts_at: m.starts_at,
+              revision: meetingVersion(m),
+            },
           );
         }
         result = { ok: true, queued: contacts.length };
@@ -420,8 +438,8 @@ export async function POST(req: Request) {
           })
           .parse(body.data);
         if (!p.text && !p.media_url) throw new Error("Add message content");
-        const contacts = checked(
-          await applyFilter(s.from("contacts").select("*"), p.filter),
+        const contacts = await allRows(
+          applyFilter(s.from("contacts").select("*"), p.filter),
         );
         const pages = checked(
           await s.from("pages").select("id,connected,capabilities"),
@@ -493,15 +511,13 @@ export async function POST(req: Request) {
               "messages,messaging_postbacks,messaging_referrals,message_deliveries,message_reads,message_echoes",
           });
           checked(
-            await s
-              .from("pages")
-              .upsert({
-                id: p.id,
-                name: p.name,
-                token_encrypted: encrypt(p.access_token),
-                connected: true,
-                updated_at: new Date().toISOString(),
-              }),
+            await s.from("pages").upsert({
+              id: p.id,
+              name: p.name,
+              token_encrypted: encrypt(p.access_token),
+              connected: true,
+              updated_at: new Date().toISOString(),
+            }),
           );
         }
         checked(await s.from("oauth_sessions").delete().eq("id", value));
@@ -576,17 +592,15 @@ export async function POST(req: Request) {
             const r = await graph(path, token);
             for (const row of r.data || []) {
               checked(
-                await s
-                  .from("ad_daily")
-                  .upsert({
-                    id: `${row.ad_id}:${row.date_start}`,
-                    ad_id: row.ad_id,
-                    date: row.date_start,
-                    ad_name: row.ad_name,
-                    campaign_name: row.campaign_name,
-                    spend: Number(row.spend),
-                    currency: row.account_currency,
-                  }),
+                await s.from("ad_daily").upsert({
+                  id: `${row.ad_id}:${row.date_start}`,
+                  ad_id: row.ad_id,
+                  date: row.date_start,
+                  ad_name: row.ad_name,
+                  campaign_name: row.campaign_name,
+                  spend: Number(row.spend),
+                  currency: row.account_currency,
+                }),
               );
               count++;
             }

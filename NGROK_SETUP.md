@@ -61,6 +61,8 @@ Also add the new OAuth redirect URI in Meta's dashboard. A private backup of the
 
 ## DNS and browser notice
 
-The Wi-Fi router's DNS returns NXDOMAIN for the ngrok hostname. OpenDNS was verified to resolve the correct ngrok addresses, including through its DNS-over-HTTPS endpoint. The setup verifier now uses OpenDNS as its first process-local fallback and retries the returned addresses; system DNS settings remain untouched. Local login, public ngrok login, and webhook verification passed with this resolver.
+The Wi-Fi router's DNS initially returned NXDOMAIN for the ngrok hostname. Later checks with Surfshark active returned addresses that closed the TLS connection. OpenDNS **over HTTPS** was verified to return working ngrok addresses. The setup verifier now uses that encrypted DNS endpoint for ngrok lookup failures or connection resets, retries the returned addresses, and preserves TLS certificate checks. Windows, browser, and VPN settings remain untouched. Local login, public ngrok login, and webhook verification passed with this resolver.
 
 If Chrome reports a name-resolution error, open `chrome://settings/security`, enable **Use secure DNS**, select a custom provider, and enter `https://doh.opendns.com/dns-query`. Restart the browser and reload the ngrok URL. The app is also available immediately at `http://localhost:3000` on this computer. If ngrok shows its visitor notice, choose **Visit Site** before signing in and connecting Facebook.
+
+For `ERR_CONNECTION_CLOSED`, use the same custom DNS-over-HTTPS provider, then test the URL on a phone using mobile data without Wi-Fi or a phone VPN. This separates a device/network DNS or filtering issue from the app. Surfshark also documents website-access troubleshooting at https://support.surfshark.com/hc/en-us/articles/360021935660-I-can-t-access-some-websites-while-connected-to-Surfshark .

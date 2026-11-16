@@ -1,20 +1,20 @@
 import https from "node:https";
-import { Resolver } from "node:dns/promises";
+import { resolveNgrok } from "./ngrok-dns.mjs";
 /** Keep TLS hostname verification intact; use process-local DNS only when local DNS fails. */
 export async function publicGet(url) {
   try {
     return await fetch(url, { signal: AbortSignal.timeout(20000) });
   } catch (error) {
     if (
-      error.cause?.code !== "ENOTFOUND" ||
+      !["ENOTFOUND", "ECONNRESET", "EAI_AGAIN", "ETIMEDOUT"].includes(
+        error.cause?.code,
+      ) ||
       !new URL(url).hostname.endsWith(".ngrok-free.dev")
     )
       throw error;
-    const resolver = new Resolver();
-    resolver.setServers(["208.67.222.222", "208.67.220.220", "1.1.1.1"]);
-    const addresses = await resolver.resolve4(new URL(url).hostname);
+    const addresses = await resolveNgrok(new URL(url).hostname);
     console.log(
-      "Public verification is using process-local DNS; system DNS is unchanged.",
+      "Public verification is using OpenDNS over HTTPS; system DNS is unchanged.",
     );
     let lastError;
     for (const address of addresses) {

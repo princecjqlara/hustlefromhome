@@ -25,6 +25,8 @@ Setup applies the SQL files in `supabase/migrations/` in order, creates the admi
 
 ## Facebook setup
 
+The app-level webhook has been configured and verified. Follow [FACEBOOK_SETUP.md](FACEBOOK_SETUP.md) for the remaining dashboard settings, Page authorization, and cron-job.org steps.
+
 1. In Meta Developers, configure Facebook Login with the exact **OAuth redirect URI** displayed in Settings.
 2. Configure a **Page webhook**, using the exact webhook URL and verification token shown in Settings. The endpoint verifies the raw-body `X-Hub-Signature-256` signature and persists deliveries before acknowledging them.
 3. Configure the app’s privacy URL as `/privacy`, and data-deletion instructions as `/data-deletion`, on the deployed domain.

@@ -2,20 +2,22 @@
 
 The application is deployed, but the complete Facebook recruiting workflow is **not active or verified end to end**. A successful build and accessible screens do not prove real message delivery.
 
+**Facebook setup update:** the app-level Page webhook has now been switched to the recruiting deployment and Meta confirms it is active. Page authorization and scheduler configuration are still pending. Meta rejected basic-settings API updates because this app disables them; see [FACEBOOK_SETUP.md](FACEBOOK_SETUP.md) for the exact remaining fields.
+
 ## Live configuration inspected
 
-| Item                                          | Observed state                                                                                             |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Admin account                                 | One administrator exists; production sign-in verified                                                      |
-| Facebook Pages in this workspace              | None connected                                                                                             |
-| Facebook app credentials                      | Accepted by Meta's read API                                                                                |
-| App's Page webhook                            | Still `https://gaia-tech.vercel.app/api/webhook`; switching it requires resolving the existing integration |
-| Questions, saved answers, qualification rules | Empty; intended to be configured in the dashboard                                                          |
-| Automation                                    | Paused                                                                                                     |
-| Ad accounts                                   | None connected                                                                                             |
-| Jev                                           | Live structured decision request succeeded and classified refusal as `stop`                                |
-| cron-job.org                                  | Authenticated endpoint tested; recurring external schedule is not verified                                 |
-| Real contacts / meetings                      | None; verification fixtures are cleaned up                                                                 |
+| Item                                          | Observed state                                                                                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Admin account                                 | One administrator exists; production sign-in verified                                                |
+| Facebook Pages in this workspace              | None connected                                                                                       |
+| Facebook app credentials                      | Accepted by Meta's read API                                                                          |
+| App's Page webhook                            | Active at `https://hustle-from-home.vercel.app/api/webhooks/facebook`; confirmed by Meta after setup |
+| Questions, saved answers, qualification rules | Empty; intended to be configured in the dashboard                                                    |
+| Automation                                    | Paused                                                                                               |
+| Ad accounts                                   | None connected                                                                                       |
+| Jev                                           | Live structured decision request succeeded and classified refusal as `stop`                          |
+| cron-job.org                                  | Authenticated endpoint tested; recurring external schedule is not verified                           |
+| Real contacts / meetings                      | None; verification fixtures are cleaned up                                                           |
 
 ## Verified behavior
 

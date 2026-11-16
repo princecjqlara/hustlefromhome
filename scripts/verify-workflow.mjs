@@ -177,13 +177,19 @@ try {
 } finally {
   await client
     .query(
-      "delete from jobs where contact_id in(select id from contacts where page_id=$1) or payload->>page_id=$1",
+      "delete from jobs where contact_id in(select id from contacts where page_id=$1) or payload->>'page_id'=$1",
       [id],
     )
-    .catch(() => {});
+    .catch((e) => {
+      console.error("Fixture cleanup failed:", e.message);
+      process.exitCode = 1;
+    });
   await client
-    .query("delete from webhook_events where payload->>page_id=$1", [id])
-    .catch(() => {});
+    .query("delete from webhook_events where payload->>'page_id'=$1", [id])
+    .catch((e) => {
+      console.error("Fixture cleanup failed:", e.message);
+      process.exitCode = 1;
+    });
   await client
     .query(
       "delete from contact_locks where contact_id in(select id from contacts where page_id=$1)",

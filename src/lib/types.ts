@@ -1,0 +1,85 @@
+export type Contact = {
+  id: string;
+  page_id: string;
+  psid: string;
+  name: string;
+  status: string;
+  opted_out: boolean;
+  human_takeover: boolean;
+  last_inbound_at: string | null;
+  first_inquiry_at: string;
+  timezone: string;
+  notes: string;
+  details: Record<string, string>;
+  answers: Record<string, string>;
+  tags: string[];
+  ad_id: string | null;
+  awaiting_question: string | null;
+  last_outbound_at: string | null;
+  created_at: string;
+  utility_requested_at?: string | null;
+  utility_request_note?: string;
+  recommendation?: Record<string, unknown>;
+};
+export type Page = {
+  id: string;
+  name: string;
+  connected: boolean;
+  updated_at: string;
+};
+export type Question = {
+  id: string;
+  label: string;
+  required: boolean;
+  kind: "text" | "number" | "email" | "choice";
+  options?: string[];
+};
+export type FAQ = {
+  id: string;
+  question: string;
+  answer: string;
+  media_url?: string;
+  media_type?: string;
+  buttons?: { title: string; url: string }[];
+};
+export type Settings = {
+  id: string;
+  automation_enabled: boolean;
+  questions: Question[];
+  faqs: FAQ[];
+  rules: string;
+  rule_version: number;
+  followup_text: string;
+  followup_buttons?: { title: string; url: string }[];
+  followup_media_url?: string;
+  followup_media_type?: string;
+  min_gap_hours: number;
+  quiet_start: number;
+  quiet_end: number;
+  confidence_threshold: number;
+  completion_text: string;
+  utility_templates: Record<string, unknown>[];
+};
+export type Meeting = {
+  id: string;
+  title: string;
+  starts_at: string;
+  timezone: string;
+  url: string;
+  capacity: number;
+  notes: string;
+  reminder_minutes: number[];
+  reminder_text: string;
+  canceled: boolean;
+  created_at: string;
+};
+export type Job = {
+  id: string;
+  kind: string;
+  contact_id: string | null;
+  payload: Record<string, any>;
+  attempts: number;
+  status: string;
+  due_at: string;
+  last_error: string | null;
+};

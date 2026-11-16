@@ -25,6 +25,8 @@ Setup applies the SQL files in `supabase/migrations/` in order, creates the admi
 
 ## Facebook setup
 
+Current local testing uses **https://mae-squarish-sid.ngrok-free.dev**. Meta’s webhook and the local environment now point to this tunnel. See [NGROK_SETUP.md](NGROK_SETUP.md).
+
 The app-level webhook has been configured and verified. Follow [FACEBOOK_SETUP.md](FACEBOOK_SETUP.md) for the remaining dashboard settings, Page authorization, and cron-job.org steps.
 
 1. In Meta Developers, configure Facebook Login with the exact **OAuth redirect URI** displayed in Settings.

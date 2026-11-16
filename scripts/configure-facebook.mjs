@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { publicGet } from "./public-http.mjs";
 const appId = process.env.FACEBOOK_APP_ID;
 const base = (
   process.env.FACEBOOK_PUBLIC_APP_URL || "https://hustle-from-home.vercel.app"
@@ -46,7 +47,7 @@ try {
       JSON.stringify(before, null, 2),
     );
   const challenge = "hustle-webhook-setup-check";
-  const probe = await fetch(
+  const probe = await publicGet(
     callback +
       "?" +
       new URLSearchParams({
@@ -54,7 +55,6 @@ try {
         "hub.verify_token": process.env.FACEBOOK_VERIFY_TOKEN,
         "hub.challenge": challenge,
       }),
-    { signal: AbortSignal.timeout(30000) },
   );
   assert.equal(probe.status, 200, "Public webhook must be reachable");
   assert.equal(await probe.text(), challenge);

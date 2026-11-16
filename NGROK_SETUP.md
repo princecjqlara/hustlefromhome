@@ -61,6 +61,6 @@ Also add the new OAuth redirect URI in Meta's dashboard. A private backup of the
 
 ## DNS and browser notice
 
-The system's default DNS returned NXDOMAIN for the ngrok hostname, while Cloudflare and Google DNS resolved it successfully. Meta independently verified the public callback. The setup verifier used a process-local public DNS resolver and left system DNS settings untouched.
+The Wi-Fi router's DNS returns NXDOMAIN for the ngrok hostname. OpenDNS was verified to resolve the correct ngrok addresses, including through its DNS-over-HTTPS endpoint. The setup verifier now uses OpenDNS as its first process-local fallback and retries the returned addresses; system DNS settings remain untouched. Local login, public ngrok login, and webhook verification passed with this resolver.
 
-If the browser reports a name-resolution error, configure its Secure DNS provider to a public resolver such as Cloudflare or Google. If ngrok shows its visitor notice, choose **Visit Site** before signing in and connecting Facebook.
+If Chrome reports a name-resolution error, open `chrome://settings/security`, enable **Use secure DNS**, select a custom provider, and enter `https://doh.opendns.com/dns-query`. Restart the browser and reload the ngrok URL. The app is also available immediately at `http://localhost:3000` on this computer. If ngrok shows its visitor notice, choose **Visit Site** before signing in and connecting Facebook.

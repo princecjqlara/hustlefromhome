@@ -25,7 +25,7 @@ Then sign in at [ngrok workspace Settings](https://mae-squarish-sid.ngrok-free.d
 
 ## Scheduler for this test
 
-Use a one-minute **POST** job at cron-job.org:
+Use a one-minute **GET** or **POST** job at cron-job.org:
 
 ```text
 https://mae-squarish-sid.ngrok-free.dev/api/jobs/tick

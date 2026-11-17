@@ -50,7 +50,7 @@ If Facebook shows an error, retain its exact text. App credentials alone cannot 
 Create one job at cron-job.org:
 
 - URL: `https://mae-squarish-sid.ngrok-free.dev/api/jobs/tick`.
-- Method: **POST**.
+- Method: **GET** or **POST**.
 - Schedule: every minute.
 - HTTP header: **Authorization**, with the full `Bearer ...` value copied from workspace Settings → Reveal setup credentials → Cron Authorization header.
 

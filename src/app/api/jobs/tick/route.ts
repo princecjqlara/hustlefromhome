@@ -1,19 +1,11 @@
-import { safeEqual } from "@/lib/crypto";
+import { handleCron } from "@/lib/cron";
 import { runJobs } from "@/lib/jobs";
 export const runtime = "nodejs";
 export const maxDuration = 300;
-export async function POST(req: Request) {
-  if (
-    !process.env.CRON_SECRET ||
-    !safeEqual(
-      req.headers.get("authorization") || "",
-      `Bearer ${process.env.CRON_SECRET}`,
-    )
-  )
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  try {
-    return Response.json({ results: await runJobs() });
-  } catch {
-    return Response.json({ error: "Job runner failed" }, { status: 500 });
-  }
+export const dynamic = "force-dynamic";
+
+async function tick(req: Request) {
+  return handleCron(req, runJobs, process.env.CRON_SECRET);
 }
+
+export { tick as GET, tick as POST, tick as HEAD };

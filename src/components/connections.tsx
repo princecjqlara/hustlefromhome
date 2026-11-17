@@ -598,7 +598,10 @@ export function SettingsPage({ data, action, busy }: Props) {
           {[
             ["Facebook webhook", data.integration.webhook_url],
             ["OAuth redirect URI", data.integration.callback_url],
-            ["Cron endpoint · POST every minute", data.integration.cron_url],
+            [
+              "Cron endpoint · GET or POST every minute",
+              data.integration.cron_url,
+            ],
           ].map(([label, value]) => (
             <Field key={label} label={label}>
               <div className="copy-field">
@@ -705,7 +708,9 @@ export function SettingsPage({ data, action, busy }: Props) {
           <p>1. Register the OAuth redirect URI in Meta Developers.</p>
           <p>2. Configure your webhook URL and verify token.</p>
           <p>3. Authorize and select your Pages.</p>
-          <p>4. Add a cron-job.org POST job with the Authorization header.</p>
+          <p>
+            4. Add a cron-job.org GET or POST job with the Authorization header.
+          </p>
           <p>5. Configure your playbook and enable automation.</p>
           <Link href="/questionnaire" className="text-link">
             Build your playbook →

@@ -18,7 +18,8 @@ async function request(path, options = {}) {
 assert.equal((await request("/login")).status, 200);
 assert.equal((await request("/api/data")).status, 401);
 assert.equal((await request("/overview")).status, 307);
-assert.equal((await request("/api/jobs/tick", { method: "POST" })).status, 401);
+for (const method of ["GET", "POST", "HEAD"])
+  assert.equal((await request("/api/jobs/tick", { method })).status, 401);
 assert.equal(
   (
     await request(

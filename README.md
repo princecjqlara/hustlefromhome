@@ -53,9 +53,10 @@ Create one job:
 
 - URL: the Settings **Cron endpoint** (`https://YOUR_DOMAIN/api/jobs/tick`).
 - Schedule: every minute.
-- HTTP method: **POST**.
+- HTTP method: **GET** or **POST** (both run the same authenticated job runner).
 - Header name: **Authorization**.
 - Header value: copy the entire **Bearer ...** value from Settings → Reveal setup credentials.
+- Both methods require this header. Opening the URL in a browser without it returns **401 Unauthorized**. HEAD only checks authentication and never runs jobs.
 - Request timeout: maximum supported by your cron-job.org plan. The endpoint processes up to three jobs concurrently. If the caller times out, inspect the queue rather than immediately resending uncertain sends.
 
 No cron-job.org account/API key was supplied, so registration of this external job must be completed separately. The dashboard’s **Run due jobs** button is available for controlled testing. Webhook events are queued, so automatic responses require the scheduler.

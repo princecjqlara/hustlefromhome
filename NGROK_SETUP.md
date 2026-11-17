@@ -31,7 +31,7 @@ Use a one-minute **GET** or **POST** job at cron-job.org:
 https://mae-squarish-sid.ngrok-free.dev/api/jobs/tick
 ```
 
-Copy the full Authorization header value from the ngrok workspace's Settings → Reveal setup credentials. Do not put the secret into the URL. An external scheduler account/API key is still required to create the recurring job.
+Leave headers, username and password empty. No cron secret is required; the endpoint is public. A cron-job.org account is still required to create the recurring job.
 
 ## Keep the local app available
 

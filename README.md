@@ -53,10 +53,9 @@ Create one job:
 
 - URL: the Settings **Cron endpoint** (`https://YOUR_DOMAIN/api/jobs/tick`).
 - Schedule: every minute.
-- HTTP method: **GET** or **POST** (both run the same authenticated job runner).
-- Header name: **Authorization**.
-- Header value: copy the entire **Bearer ...** value from Settings → Reveal setup credentials.
-- Both methods require this header. Opening the URL in a browser without it returns **401 Unauthorized**. HEAD only checks authentication and never runs jobs.
+- HTTP method: **GET** or **POST** (both run the same job runner).
+- Headers, username and password: leave empty. No cron secret is required.
+- The endpoint is public; anyone with its URL can trigger due jobs. HEAD returns **204** without running jobs.
 - Request timeout: maximum supported by your cron-job.org plan. The endpoint processes up to three jobs concurrently. If the caller times out, inspect the queue rather than immediately resending uncertain sends.
 
 No cron-job.org account/API key was supplied, so registration of this external job must be completed separately. The dashboard’s **Run due jobs** button is available for controlled testing. Webhook events are queued, so automatic responses require the scheduler.
@@ -86,7 +85,7 @@ node --env-file=.env.local scripts/verify-database.mjs
 node --env-file=.env.local scripts/verify-http.mjs
 ```
 
-Database verification uses synthetic records inside a rolled-back transaction. HTTP verification checks protected routes, login, signatures, verification challenges, CSRF, cron authentication, and all dashboard screens. Set TEST_APP_URL to test the deployed domain. HTTP verification expects automation to remain paused during initial acceptance testing.
+Database verification uses synthetic records inside a rolled-back transaction. HTTP verification checks protected routes, login, signatures, verification challenges, CSRF, the public cron endpoint, and all dashboard screens. Set TEST_APP_URL to test the deployed domain. HTTP verification expects automation to remain paused during initial acceptance testing.
 
 ## Deployment
 

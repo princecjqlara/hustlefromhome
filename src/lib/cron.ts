@@ -1,21 +1,9 @@
-import { safeEqual } from "./crypto";
-
-export async function handleCron(
-  req: Request,
-  run: () => Promise<unknown>,
-  secret: string | undefined,
-) {
+export async function handleCron(req: Request, run: () => Promise<unknown>) {
   const headers = { "Cache-Control": "no-store" };
-  const authorized =
-    !!secret &&
-    safeEqual(req.headers.get("authorization") || "", `Bearer ${secret}`);
 
   // Next.js otherwise implements HEAD by invoking GET, which would run jobs.
   if (req.method === "HEAD")
-    return new Response(null, { status: authorized ? 204 : 401, headers });
-
-  if (!authorized)
-    return Response.json({ error: "Unauthorized" }, { status: 401, headers });
+    return new Response(null, { status: 204, headers });
 
   try {
     return Response.json({ results: await run() }, { headers });

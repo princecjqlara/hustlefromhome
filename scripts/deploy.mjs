@@ -37,7 +37,6 @@ const keys = [
   "OPENROUTER_API_KEY",
   "JEV_MODEL",
   "TOKEN_ENCRYPTION_KEY",
-  "CRON_SECRET",
   "APP_URL",
 ];
 for (const key of keys) {

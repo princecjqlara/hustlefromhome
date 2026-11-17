@@ -616,6 +616,9 @@ export function SettingsPage({ data, action, busy }: Props) {
               </div>
             </Field>
           ))}
+          <p className="muted">
+            Cron jobs use GET or POST with no headers or login credentials.
+          </p>
           <button
             className="btn small"
             disabled={busy}
@@ -624,7 +627,7 @@ export function SettingsPage({ data, action, busy }: Props) {
               if (d) setSecrets(d);
             }}
           >
-            Reveal setup credentials
+            Reveal webhook verify token
           </button>
           {secrets && (
             <div className="credentials">
@@ -646,28 +649,8 @@ export function SettingsPage({ data, action, busy }: Props) {
                   </button>
                 </div>
               </Field>
-              <Field label="Cron Authorization header">
-                <div className="copy-field">
-                  <input
-                    type="password"
-                    readOnly
-                    value={"Bearer " + secrets.cron_secret}
-                  />
-                  <button
-                    className="icon-btn"
-                    title="Copy authorization header"
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        "Bearer " + secrets.cron_secret,
-                      )
-                    }
-                  >
-                    <Copy size={15} />
-                  </button>
-                </div>
-              </Field>
               <button className="text-link" onClick={() => setSecrets(null)}>
-                Hide credentials
+                Hide verification token
               </button>
             </div>
           )}
@@ -709,7 +692,8 @@ export function SettingsPage({ data, action, busy }: Props) {
           <p>2. Configure your webhook URL and verify token.</p>
           <p>3. Authorize and select your Pages.</p>
           <p>
-            4. Add a cron-job.org GET or POST job with the Authorization header.
+            4. Add a cron-job.org GET or POST job without headers or
+            credentials.
           </p>
           <p>5. Configure your playbook and enable automation.</p>
           <Link href="/questionnaire" className="text-link">

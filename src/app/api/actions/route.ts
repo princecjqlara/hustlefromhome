@@ -614,7 +614,6 @@ export async function POST(req: Request) {
       case "integration.credentials":
         result = {
           verify_token: process.env.FACEBOOK_VERIFY_TOKEN,
-          cron_secret: process.env.CRON_SECRET,
         };
         break;
       default:

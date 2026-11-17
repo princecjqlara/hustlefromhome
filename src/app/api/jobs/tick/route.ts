@@ -5,7 +5,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 async function tick(req: Request) {
-  return handleCron(req, runJobs, process.env.CRON_SECRET);
+  return handleCron(req, runJobs);
 }
 
 export { tick as GET, tick as POST, tick as HEAD };

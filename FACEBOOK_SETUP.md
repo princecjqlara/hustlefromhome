@@ -52,9 +52,9 @@ Create one job at cron-job.org:
 - URL: `https://mae-squarish-sid.ngrok-free.dev/api/jobs/tick`.
 - Method: **GET** or **POST**.
 - Schedule: every minute.
-- HTTP header: **Authorization**, with the full `Bearer ...` value copied from workspace Settings → Reveal setup credentials → Cron Authorization header.
+- Headers, username and password: leave empty. No cron secret is required.
 
-The cron-job.org API key is separate from this job's Authorization header. No cron-job.org account/API key has been provided, so an external recurring job has not been created by this setup.
+No cron-job.org account/API key has been provided, so an external recurring job has not been created by this setup. The job endpoint is public and can be triggered by anyone with its URL.
 
 ## Turn on the playbook
 

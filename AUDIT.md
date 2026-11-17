@@ -16,14 +16,14 @@ The application is deployed, but the complete Facebook recruiting workflow is **
 | Automation                                    | Paused                                                                                                         |
 | Ad accounts                                   | None connected                                                                                                 |
 | Jev                                           | Live structured decision request succeeded and classified refusal as `stop`                                    |
-| cron-job.org                                  | Authenticated endpoint tested; recurring external schedule is not verified                                     |
+| cron-job.org                                  | Public GET/POST endpoint requires no secret; recurring external schedule is not verified                        |
 | Real contacts / meetings                      | None; verification fixtures are cleaned up                                                                     |
 
 ## Verified behavior
 
 - TypeScript and production build pass, with 14 automated tests for messaging-window boundaries, opt-out, timing estimates, quiet hours, signatures, token encryption, meeting generations, and event ordering.
 - Live database checks cover direct-access restrictions, contact locks, transactional RSVP capacity, idempotent RSVP, click recording, and job claims.
-- HTTP checks cover administrator sign-in, protected routes, cross-origin mutation rejection, secret redaction, webhook verification/signatures, cron authentication, and all 12 workspace screens.
+- HTTP checks cover administrator sign-in, protected routes, cross-origin mutation rejection, secret redaction, webhook verification/signatures, the public cron endpoint, and all 12 workspace screens.
 - Action checks use synthetic records and restore the original settings: question/FAQ/button persistence, contact notes/tags/details, takeover resume, meeting creation/edit/reinvitation/cancellation, tag-filtered recipients, tracked redirects, and blocked campaign recipients. A 1,001-recipient fixture checks bulk pagination.
 - Signed synthetic webhook checks cover durable receipt, duplicate delivery, read/delivery ordering, stale timestamps, immediate STOP suppression, and worker processing. They send no real customer messages.
 

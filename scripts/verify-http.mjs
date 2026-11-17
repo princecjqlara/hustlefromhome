@@ -18,8 +18,7 @@ async function request(path, options = {}) {
 assert.equal((await request("/login")).status, 200);
 assert.equal((await request("/api/data")).status, 401);
 assert.equal((await request("/overview")).status, 307);
-for (const method of ["GET", "POST", "HEAD"])
-  assert.equal((await request("/api/jobs/tick", { method })).status, 401);
+assert.equal((await request("/api/jobs/tick", { method: "HEAD" })).status, 204);
 assert.equal(
   (
     await request(
@@ -114,9 +113,8 @@ for (const section of [
 }
 const tick = await request("/api/jobs/tick", {
   method: "POST",
-  headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
 });
 assert.equal(tick.status, 200);
 console.log(
-  "HTTP checks passed: login, admin authorization, CSRF, secret redaction, webhook verification/signature, cron authorization, and 12 application screens.",
+  "HTTP checks passed: login, admin authorization, CSRF, secret redaction, webhook verification/signature, public cron endpoint, and 12 application screens.",
 );

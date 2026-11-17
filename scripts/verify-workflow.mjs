@@ -46,7 +46,6 @@ async function webhook(text, mid, extra = {}) {
 async function tick() {
   const r = await fetch(base + "/api/jobs/tick", {
     method: "POST",
-    headers: { authorization: "Bearer " + process.env.CRON_SECRET },
   });
   assert.equal(r.status, 200);
   return r.json();

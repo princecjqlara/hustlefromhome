@@ -11,6 +11,7 @@ import {
 export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   return (
     <main className="login">
       <section className="login-story">
@@ -66,7 +67,7 @@ export default function Login() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  email: f.get("email"),
+                  email: String(f.get("email") || "").trim(),
                   password: f.get("password"),
                 }),
               });
@@ -87,17 +88,30 @@ export default function Login() {
               required
               placeholder="you@company.com"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </label>
           <label>
             Password
-            <input
-              name="password"
-              type="password"
-              required
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
+            <div className="password-input">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </label>
           {error && (
             <div className="notice error" role="alert">

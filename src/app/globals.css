@@ -2253,3 +2253,22 @@ input[type="range"] {
 .custom-field {
   margin-bottom: 9px;
 }
+
+.password-input {
+  position: relative;
+}
+.login-form .password-input input {
+  padding-right: 65px;
+}
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px;
+}

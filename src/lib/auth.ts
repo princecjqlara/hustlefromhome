@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { db, checked } from "./db";
+import { allowedOrigin } from "./login";
 export async function authClient() {
   const jar = await cookies();
   return createServerClient(
@@ -36,9 +37,12 @@ export async function member() {
 export function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (
-    origin &&
-    origin !== new URL(request.url).origin &&
-    origin !== process.env.APP_URL
+    !allowedOrigin(
+      origin,
+      request.url,
+      request.headers.get("host"),
+      process.env.APP_URL,
+    )
   )
     throw new Error("Forbidden origin");
 }

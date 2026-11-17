@@ -90,8 +90,8 @@ Database verification uses synthetic records inside a rolled-back transaction. H
 ## Deployment
 
 ```powershell
-vercel link --yes --project hustle-from-home
-# APP_URL uses DEPLOY_APP_URL, defaulting to https://hustle-from-home.vercel.app
+vercel link --yes --project hustlefromhome
+# APP_URL uses DEPLOY_APP_URL, defaulting to https://hustlefromhome.vercel.app
 npm run deploy
 ```
 

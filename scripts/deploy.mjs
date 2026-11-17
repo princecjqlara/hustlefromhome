@@ -43,7 +43,7 @@ const keys = [
 for (const key of keys) {
   const value =
     key === "APP_URL"
-      ? process.env.DEPLOY_APP_URL || "https://hustle-from-home.vercel.app"
+      ? process.env.DEPLOY_APP_URL || "https://hustlefromhome.vercel.app"
       : process.env[key];
   if (!value) throw new Error(`Missing ${key}`);
   await run(

@@ -62,7 +62,9 @@ No cron-job.org account/API key was supplied, so registration of this external j
 
 ## Workflow behavior
 
-- Jev chooses approved actions/FAQ replies and produces advisory qualification recommendations. Administrators confirm final recruiting qualification. Ambiguous intent, unsupported answers, and provider failures pause the affected conversation for review.
+- In **Questionnaire**, select **All unanswered questions in one form** or **One question at a time**. Contacts can answer multiple fields in a single reply in either mode. Jev selects exact values from the latest message; missing or uncertain values stay unanswered. Numbered answers keep the form's original question numbers.
+- Add and reorder **Process messages sent with the form** in Questionnaire. Each text, optional media attachment, and button message sends separately after the form, including when the remaining form repeats during a follow-up. The preview shows the delivery order. Completed forms send no further process messages. Save the playbook to apply changes.
+- Jev chooses approved actions/FAQ replies and produces advisory qualification recommendations. Administrators confirm final recruiting qualification. Ambiguous intent and provider failures pause the affected conversation for review. Unclear form answers remain unanswered for clarification.
 - Follow-ups have no lifetime attempt cap. Default minimum spacing is two hours; quiet hours are 21:00–08:00 in the contact timezone, defaulting to Asia/Manila. Refusal, human takeover, questionnaire completion, and expiry stop automation.
 - Contact-time suggestions weight recent inbound hours over 90 days with a 30-day half-life and adjacent-hour smoothing. Fewer than five messages on three distinct days falls back to five hours nearest the first inquiry. Suggestions are estimates, never guaranteed accuracy.
 - Invites go to administrator-confirmed qualified contacts. RSVP capacity is enforced transactionally. Reminders are configurable and subject to messaging eligibility. Link clicks, RSVPs, and manually recorded attendance are distinct metrics. Editing a meeting cancels pending jobs; send updated invitations to reschedule reminders.
@@ -81,11 +83,14 @@ The first version loads paginated database results into the authenticated dashbo
 npm run typecheck
 npm test
 npm run build
+node --env-file=.env.local --import tsx scripts/verify-form.ts
 node --env-file=.env.local scripts/verify-database.mjs
 node --env-file=.env.local scripts/verify-http.mjs
 ```
 
 Database verification uses synthetic records inside a rolled-back transaction. HTTP verification checks protected routes, login, signatures, verification challenges, CSRF, the public cron endpoint, and all dashboard screens. Set TEST_APP_URL to test the deployed domain. HTTP verification expects automation to remain paused during initial acceptance testing.
+
+The form verification script calls Jev with synthetic labelled, numbered, natural-language, and partial replies. It sends no Meta messages. Candidate-based extraction follows [OpenRouter's Jev extraction pattern](https://openrouter.ai/labs/jev/extract); it does not infer missing facts or generate answers.
 
 ## Deployment
 

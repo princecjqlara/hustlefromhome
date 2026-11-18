@@ -13,6 +13,8 @@ import { decide, choice } from "./jev";
 import { explicitOptOut, nextFollowup } from "./policy";
 import type { Contact, Settings } from "./types";
 import { eventTime, incomingIsOlder } from "./workflow";
+import { acceptAnswers, prepareAnswers } from "./form";
+import { sendForm } from "./form-dispatch";
 export async function settings(): Promise<Settings> {
   return checked(
     await db().from("settings").select("*").eq("id", "business").single(),
@@ -250,11 +252,21 @@ export async function processEvent(
         .limit(50),
     ).reverse();
     const pending = cfg.questions.find((q) => q.id === c!.awaiting_question);
+    const prepared = prepareAnswers(
+      ["qualified", "unqualified"].includes(c!.status) ? [] : cfg.questions,
+      c!.answers,
+      event.message?.text || "",
+      c!.awaiting_question,
+    );
     const result = await decide(
       {
         conversation: history,
         latest_message: text,
         pending_question: pending,
+        questionnaire: cfg.questions.map((q, index) => ({
+          ...q,
+          number: index + 1,
+        })),
         rules: cfg.rules,
         answers: c!.answers,
       },
@@ -284,15 +296,7 @@ export async function processEvent(
               },
             }
           : {}),
-        ...(pending
-          ? {
-              answer_valid: {
-                type: "noul",
-                instructions:
-                  "Does the latest message directly answer the pending question with a valid value? A question or request for clarification is not an answer.",
-              },
-            }
-          : {}),
+        ...prepared.decisions,
       },
     );
     const intent = choice(result.intent, cfg.confidence_threshold);
@@ -333,45 +337,17 @@ export async function processEvent(
           `faq-media:${eventKey}`,
         );
     }
-    const answers = { ...c!.answers };
+    const answers = acceptAnswers(
+      prepared,
+      result,
+      c!.answers,
+      cfg.confidence_threshold,
+    );
     if (
       ["qualified", "unqualified"].includes(c!.status) ||
-      (c!.recommendation && cfg.questions.every((q) => answers[q.id]))
+      (c!.recommendation && cfg.questions.every((q) => c!.answers[q.id]))
     )
       return;
-    if (pending && !faq) {
-      const valid =
-        (result.answer_valid?.noul ?? 0) >= cfg.confidence_threshold;
-      const structural =
-        pending.kind === "email"
-          ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text.trim())
-          : pending.kind === "number"
-            ? Number.isFinite(Number(text)) && text.trim() !== ""
-            : pending.kind === "choice"
-              ? pending.options?.some(
-                  (o) => o.toLowerCase() === text.trim().toLowerCase(),
-                )
-              : Boolean(text.trim() && event.message?.text);
-      if (
-        !pending.required &&
-        /^(skip|pass|prefer not to answer)$/i.test(text.trim())
-      )
-        answers[pending.id] = "[Skipped]";
-      else if (valid && structural) answers[pending.id] = text.trim();
-      else {
-        checked(
-          await s
-            .from("contacts")
-            .update({ human_takeover: true, status: "review" })
-            .eq("id", contact.id),
-        );
-        await audit("answer.review", {
-          contact_id: contact.id,
-          question: pending.id,
-        });
-        return;
-      }
-    }
     const next = cfg.questions.find((q) => !answers[q.id]);
     checked(
       await s
@@ -384,18 +360,7 @@ export async function processEvent(
         .eq("id", contact.id),
     );
     if (next) {
-      await send(
-        contact.id,
-        {
-          text:
-            next.label +
-            (next.options?.length ? "\n" + next.options.join(" / ") : "") +
-            (!next.required
-              ? "\nYou can reply SKIP for this optional question."
-              : ""),
-        },
-        `question:${eventKey}`,
-      );
+      await sendForm(contact.id, cfg, answers, `question:${eventKey}`, inbound);
       await scheduleFollowup(contact.id, eventKey);
     } else {
       const qualification = await decide(

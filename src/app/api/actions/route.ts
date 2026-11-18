@@ -15,6 +15,7 @@ import { eligibility, type SendMode } from "@/lib/policy";
 import { runJobs } from "@/lib/jobs";
 import { scheduleFollowup } from "@/lib/automation";
 import { meetingVersion, needsFollowupResume } from "@/lib/workflow";
+import { defaultFormIntro } from "@/lib/form";
 const uuid = z.string().uuid();
 const url = z
   .string()
@@ -219,6 +220,33 @@ export async function POST(req: Request) {
                 }),
               )
               .max(50),
+            form_mode: z.enum(["single", "form"]).default("form"),
+            form_intro: z.string().max(2000).default(defaultFormIntro),
+            process_messages: z
+              .array(
+                z
+                  .object({
+                    id: z.string().min(1).max(60),
+                    text: z.string().max(2000),
+                    media_url: z.union([url, z.literal("")]).optional(),
+                    media_type: z
+                      .enum(["image", "video", "audio", "file"])
+                      .optional(),
+                    buttons: buttonsSchema,
+                  })
+                  .refine(
+                    (step) => !!step.text.trim() || !!step.media_url,
+                    "Each process message needs text or media",
+                  )
+                  .refine(
+                    (step) =>
+                      !step.buttons?.length ||
+                      (step.text.trim().length > 0 && step.text.length <= 640),
+                    "Process messages with buttons need 1–640 characters of text",
+                  ),
+              )
+              .max(10)
+              .default([]),
             faqs: z
               .array(
                 z.object({
@@ -249,6 +277,11 @@ export async function POST(req: Request) {
           .parse(body.data);
         if (new Set(p.questions.map((q) => q.id)).size !== p.questions.length)
           throw new Error("Question IDs must be unique");
+        if (
+          new Set(p.process_messages.map((step) => step.id)).size !==
+          p.process_messages.length
+        )
+          throw new Error("Process message IDs must be unique");
         if (p.questions.some((q) => q.kind === "choice" && !q.options?.length))
           throw new Error("Choice questions require options");
         if (p.automation_enabled && (!p.questions.length || !p.rules.trim()))

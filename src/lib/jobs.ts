@@ -13,6 +13,7 @@ import { choice, decide } from "./jev";
 import { quietAt } from "./policy";
 import type { Job } from "./types";
 import { meetingVersion } from "./workflow";
+import { sendForm } from "./form-dispatch";
 async function execute(job: Job) {
   const s = db();
   if (job.kind === "webhook") {
@@ -100,6 +101,16 @@ async function execute(job: Job) {
         false,
         { expectedInbound: c.last_inbound_at },
       );
+    const current = checked(
+      await s.from("contacts").select("answers").eq("id", c.id).single(),
+    );
+    await sendForm(
+      c.id,
+      cfg,
+      current.answers,
+      `followup-form:${job.id}`,
+      c.last_inbound_at,
+    );
     await scheduleFollowup(c.id, job.id);
     return;
   }

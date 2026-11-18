@@ -42,10 +42,20 @@ export type FAQ = {
   media_type?: string;
   buttons?: { title: string; url: string }[];
 };
+export type ProcessMessage = {
+  id: string;
+  text: string;
+  media_url?: string;
+  media_type?: "image" | "video" | "audio" | "file";
+  buttons?: { title: string; url: string }[];
+};
 export type Settings = {
   id: string;
   automation_enabled: boolean;
   questions: Question[];
+  form_mode?: "single" | "form";
+  form_intro?: string;
+  process_messages?: ProcessMessage[];
   faqs: FAQ[];
   rules: string;
   rule_version: number;

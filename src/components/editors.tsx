@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import ButtonEditor from "./buttons";
+import FormEditor from "./form-editor";
 import {
   Plus,
   Trash2,
@@ -132,9 +133,12 @@ export function Playbook({
     <div className="editor-layout">
       <div className="editor-main">
         {section === "questionnaire" && (
+          <FormEditor cfg={cfg} update={update} />
+        )}
+        {section === "questionnaire" && (
           <Panel
             title="The conversation flow"
-            sub="Questions are asked in order. All configured questions are collected; required answers must be present for qualification."
+            sub="Set the questions and their order. Multiple answers can be collected from one reply. Required answers must be present for qualification."
             action={
               <button
                 className="btn small"
@@ -481,7 +485,7 @@ export function Playbook({
           <>
             <Panel
               title="A thoughtful nudge"
-              sub="No lifetime attempt cap. Each send requires an eligible window and a fresh conversation check."
+              sub="Each follow-up includes your remaining form and its process messages. Each send requires an eligible window and a fresh conversation check."
             >
               <Field label="Follow-up message">
                 <textarea
